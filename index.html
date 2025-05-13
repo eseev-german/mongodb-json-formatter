@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MongoDB JSON to Human-Readable Converter</title>
+  <style>
+    :root {
+      --primary: #4a6cf7;
+      --primary-dark: #3a57d7;
+      --secondary: #6c757d;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --success: #28a745;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background-color: #f5f7fe;
+      padding: 2rem 1rem;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--box-shadow);
+    }
+    
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    
+    h1 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    
+    .description {
+      color: var(--secondary);
+      margin-bottom: 1.5rem;
+    }
+    
+    code {
+      background-color: #f1f1f1;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    
+    .converter-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+      .converter-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    .input-section, .output-section {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .section-title {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: var(--dark);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title svg {
+      margin-right: 0.5rem;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      resize: none;
+      transition: var(--transition);
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+    }
+    
+    #outputJson {
+      background-color: #fafafa;
+    }
+    
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin: 1.5rem 0;
+    }
+    
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    button:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button svg {
+      margin-right: 0.5rem;
+    }
+    
+    .footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--secondary);
+    }
+    
+    .copy-btn {
+      background-color: var(--secondary);
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-left: auto;
+      font-size: 0.8rem;
+    }
+    
+    .copy-btn:hover {
+      background-color: #5a6268;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background-color: var(--success);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--border-radius);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: var(--box-shadow);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>MongoDB JSON to Human-Readable Converter</h1>
+      <p class="description">Convert MongoDB JSON with date objects to readable ISO format dates</p>
+    </header>
+    
+    <div class="converter-container">
+      <div class="input-section">
+        <div class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <line x1="10" y1="9" x2="8" y2="9"></line>
+          </svg>
+          Input MongoDB JSON
+        </div>
+        <p>Paste JSON with MongoDB date format <code>"$date": {"$numberLong": "..."}</code>:</p>
+        <textarea id="inputJson" placeholder="Paste your MongoDB JSON here..."></textarea>
+      </div>
+      
+      <div class="output-section">
+        <div class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          Converted Result
+          <button id="copyBtn" class="copy-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <textarea id="outputJson" readonly placeholder="Converted JSON will appear here..."></textarea>
+      </div>
+    </div>
+    
+    <div class="button-container">
+      <button id="convertBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2v6h-6"></path>
+          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+          <path d="M3 22v-6h6"></path>
+          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+        </svg>
+        Convert Dates
+      </button>
+    </div>
+    
+    <div class="footer">
+      <p>This tool works locally in your browser - no data is sent to any server.</p>
+    </div>
+  </div>
+  
+  <div id="toast" class="toast">Copied to clipboard!</div>
+  
+  <script>
+    function convertDates(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(convertDates);
+      } else if (obj !== null && typeof obj === 'object') {
+        if (Object.keys(obj).length === 1 && obj.$date && typeof obj.$date === 'object' && '$numberLong' in obj.$date) {
+          const ms = Number(obj.$date.$numberLong);
+          const d = new Date(ms);
+          // Convert Z to +00:00
+          return d.toISOString().replace('Z', '+00:00');
+        } else {
+          const result = {};
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              result[key] = convertDates(obj[key]);
+            }
+          }
+          return result;
+        }
+      }
+      return obj;
+    }
+
+    document.getElementById('convertBtn').addEventListener('click', () => {
+      const input = document.getElementById('inputJson').value;
+      try {
+        const parsed = JSON.parse(input);
+        const converted = convertDates(parsed);
+        document.getElementById('outputJson').value = JSON.stringify(converted, null, 2);
+      } catch (e) {
+        alert('Error parsing JSON: ' + e.message);
+      }
+    });
+    
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const outputText = document.getElementById('outputJson');
+      outputText.select();
+      document.execCommand('copy');
+      
+      // Show toast notification
+      const toast = document.getElementById('toast');
+      toast.style.opacity = '1';
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
